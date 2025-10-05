@@ -1,0 +1,91 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.selector {
+  position: relative;
+
+  .select {
+    width: 100%;
+    border: none;
+    appearance: none;
+    padding: 15px 50px 15px 15px;
+    background-color: rgb(var(--color-dark));
+    color: rgb(var(--color-white));
+    font-size: var(--font-size-medium);
+    line-height: var(--font-size-medium);
+    text-transform: uppercase;
+
+    &::placeholder {
+      color: rgb(var(--color-light));
+    }
+
+    &:focus {
+      outline: none;
+      background-color: rgb(var(--color-white));
+      color: rgb(var(--color-black));
+    }
+
+    &:disabled {
+      opacity: initial;
+      background-image: var(--color-disabled);
+
+      &::placeholder {
+        color: rgb(var(--color-white));
+      }
+    }
+
+    .option {
+      color: rgb(var(--color-black));
+      background-color: rgb(var(--color-white));
+
+      &:checked {
+        color: rgb(var(--color-white));
+        background-color: rgb(var(--color-black));
+      }
+
+      &:disabled {
+        color: rgb(var(--color-dark));
+      }
+    }
+  }
+
+  .icon {
+    position: absolute;
+    right: 15px;
+    top: 20px;
+    color: rgb(var(--color-white));
+    pointer-events: none;
+  }
+
+  &:focus-within .icon {
+    color: rgb(var(--color-black));
+  }
+}
+
+.selector.multiple {
+  .select {
+    display: flex;
+    overflow: hidden;
+
+    &:focus {
+      background-color: rgb(var(--color-white));
+      color: rgb(var(--color-black));
+
+      .option {
+        color: rgb(var(--color-black));
+      }
+    }
+
+    .option {
+      background: none;
+      color: rgb(var(--color-white));
+
+      &:checked {
+        background-color: rgb(var(--color-black));
+      }
+    }
+  }
+}

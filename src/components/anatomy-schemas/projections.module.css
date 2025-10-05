@@ -1,0 +1,14 @@
+.subregion {
+  fill: rgb(var(--color-light));
+  fill-opacity: 0.2;
+  stroke: rgb(var(--color-white));
+  stroke-width: 2;
+  stroke-miterlimit: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  &[data-selected='true'] {
+    fill: rgb(var(--color-danger));
+    stroke: rgb(var(--color-danger));
+  }
+}
