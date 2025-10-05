@@ -8,6 +8,8 @@ import { Delimiter } from 'components/delimiter';
 import { Text } from 'components/text';
 import { Option, Selector } from 'components/selector';
 
+import { objectToString } from 'utilities/object-formatter.ts';
+
 import styles from './card.module.css';
 
 export const Card = () => {
@@ -28,7 +30,14 @@ export const Card = () => {
       }
     }
 
-    console.log('Submission:', grouped);
+    navigator.clipboard
+      .writeText(objectToString(grouped))
+      .then(() => {
+        alert('Данные карточки скопированы в буфер обмена.');
+      })
+      .catch(() => {
+        alert('Бля, данные карточки проебались');
+      });
   };
   return (
     <Page as="form" onSubmit={submit} title="Создание ТМКР">

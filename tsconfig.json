@@ -13,8 +13,10 @@
       "hooks/*": ["./src/hooks/*"],
       "libraries/*": ["./src/libraries/*"],
       "pages/*": ["./src/pages/*"],
-      "components/*": ["./src/components/*"]
-    }
+      "components/*": ["./src/components/*"],
+      "utilities/*": ["./src/utilities/*"]
+    },
+    "allowImportingTsExtensions": true
   },
   "include": ["src"]
 }
