@@ -8,14 +8,14 @@ import styles from './selector.module.css';
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & DataAttributes;
 
-export const Selector: FC<SelectProps> = forwardRef<HTMLDivElement, SelectProps>(
+export const Selector: FC<SelectProps> = forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, children, ...other }: SelectProps, ref) => (
-    <div ref={ref} className={styles.container}>
+    <div className={styles.container}>
       <Text as="label" size="small" color="white" variant="small-caps" htmlFor={other.id}>
         {other['data-label']}
       </Text>
       <div className={clsx(styles.selector, other.multiple && styles.multiple)}>
-        <select {...other} className={clsx(styles.select, className)}>
+        <select ref={ref} {...other} className={clsx(styles.select, className)}>
           {children}
         </select>
         <svg

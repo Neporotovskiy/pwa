@@ -24,4 +24,9 @@
   font-size: var(--font-size-medium);
   line-height: var(--font-size-medium);
   text-transform: uppercase;
+
+  &:disabled {
+    background-image: var(--color-disabled);
+    color: rgb(var(--color-light));
+  }
 }

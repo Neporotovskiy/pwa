@@ -1,68 +1,18 @@
-import { OptionHTMLAttributes, SyntheticEvent, useEffect, useState } from 'react';
+import type { Card, Wound } from 'types/card.ts';
 
 import { FrontProjection } from 'components/anatomy-schemas/front-projection';
-import type { Descriptor } from 'components/anatomy-schemas/types';
 import { Text } from 'components/text';
 import { Selector, Option } from 'components/selector';
 
 import styles from './wound-locator.module.css';
 
-const OPTIONS: Partial<OptionHTMLAttributes<HTMLOptionElement>>[] = [
-  { value: 'Вентральная', children: 'Вентральная' },
-  { value: 'Сагиттальная прав.', children: 'Сагиттальная прав.' },
-  { value: 'Дорсальная', children: 'Дорсальная' },
-  { value: 'Сагиттальная лев.', children: 'Сагиттальная лев.' },
-];
+type Props = {
+  projection: Card['scheme']['projection'];
+  wounds: Wound[];
+  onSelect: (projection: Card['scheme']['projection'], wounds: Wound[]) => void;
+};
 
-const WOUND_TYPE_GROUPS: {
-  name: string;
-  options: Partial<OptionHTMLAttributes<HTMLOptionElement>>[];
-}[] = [
-  {
-    name: 'Травмы',
-    options: [
-      { value: 'Рана', children: 'Рана' },
-      { value: 'Ампутация', children: 'Ампутация' },
-      { value: 'Ожог', children: 'Ожог' },
-    ],
-  },
-  {
-    name: 'Оборудование',
-    options: [
-      { value: 'Жгут', children: 'Жгут' },
-      { value: 'Турникет', children: 'Турникет' },
-      { value: 'Бандаж', children: 'Бандаж' },
-      { value: 'Наглазник', children: 'Наглазник' },
-      { value: 'Катетер', children: 'Катетер' },
-    ],
-  },
-  {
-    name: 'Препараты',
-    options: [
-      { value: 'Обезболивающее', children: 'Обезболивающее' },
-      { value: 'Противошоковое', children: 'Противошоковое' },
-      { value: 'Противоожоговое', children: 'Противоожоговое' },
-      { value: 'Антисептик', children: 'Антисептик' },
-    ],
-  },
-];
-
-export const WoundLocator = () => {
-  const [projection, setProjection] = useState<
-    Partial<OptionHTMLAttributes<HTMLOptionElement>>['value']
-  >(OPTIONS[0].value);
-
-  const [selectedRegionsDescriptors, setSelectedRegionsDescriptors] = useState<Descriptor[]>([]);
-
-  const changeProjection = (event: SyntheticEvent<HTMLSelectElement>): void => {
-    const { value } = event.target as HTMLSelectElement;
-    setProjection(value);
-  };
-
-  const changeSelectedRegions = (descriptors: Descriptor[]): void => {
-    setSelectedRegionsDescriptors(descriptors);
-  };
-
+export const WoundLocator = ({ projection, wounds, onSelect }: Props) => {
   return (
     <>
       <Text as="h2" size="medium" color="white" variant="small-caps" className={styles.title}>
@@ -70,16 +20,16 @@ export const WoundLocator = () => {
       </Text>
       <Selector
         id="projection"
-        name="Раны.Проекция"
         data-label="Проекция схемы"
         value={projection}
-        onChange={changeProjection}
+        onChange={(event) => {
+          onSelect(event.target.value, wounds);
+        }}
       >
-        {OPTIONS.map(({ children, ...other }) => (
-          <Option key={other.value as string} {...other}>
-            {children}
-          </Option>
-        ))}
+        <Option value="front">Вентральная</Option>
+        <Option value="right">Сагиттальная прав.</Option>
+        <Option value="back">Дорсальная</Option>
+        <Option value="left">Сагиттальная лев.</Option>
       </Selector>
       <div className={styles.projection}>
         <Text size="small" color="white" variant="small-caps">
@@ -87,44 +37,108 @@ export const WoundLocator = () => {
         </Text>
         <div className={styles.canvas}>
           <FrontProjection
-            selectedRegionsDescriptors={selectedRegionsDescriptors}
-            onRegionSelect={changeSelectedRegions}
+            selected={wounds}
+            onSelect={(descriptor) => {
+              const isSelected = wounds.some(
+                (wound) =>
+                  descriptor.locator.region === wound.locator.region &&
+                  descriptor.locator.subregion === wound.locator.subregion,
+              );
+              if (isSelected) {
+                const result = wounds.filter(
+                  (wound) =>
+                    descriptor.locator.region !== wound.locator.region ||
+                    descriptor.locator.subregion !== wound.locator.subregion,
+                );
+                onSelect(projection, result);
+              } else {
+                onSelect(projection, [
+                  ...wounds,
+                  { locator: descriptor.locator, type: ['wound'], equipments: [], medicines: [] },
+                ]);
+              }
+            }}
           />
         </div>
       </div>
       <ul className={styles.wounds}>
-        <Text size="medium" color="white" variant="small-caps">
-          Типы ранений
-        </Text>
-        {selectedRegionsDescriptors.length > 0 ? (
-          selectedRegionsDescriptors.map((descriptor) => (
-            <li key={`${descriptor.region}, ${descriptor.subregion}`} className={styles.wound}>
-              <Selector
-                id={`${descriptor.region}, ${descriptor.subregion}`}
-                name={`Раны.${
-                  descriptor.region === descriptor.subregion
-                    ? descriptor.region
-                    : `${descriptor.region}, ${descriptor.subregion}`
-                }`}
-                data-label={
-                  descriptor.region === descriptor.subregion
-                    ? descriptor.region
-                    : `${descriptor.region}, ${descriptor.subregion}`
-                }
-                defaultValue={WOUND_TYPE_GROUPS[0].options[0].value}
-              >
-                {WOUND_TYPE_GROUPS.map(({ name, options }) => (
-                  <optgroup key={name} label={name}>
-                    {options.map(({ children, ...other }) => (
-                      <Option key={other.value as string} {...other}>
-                        {children}
-                      </Option>
-                    ))}
-                  </optgroup>
-                ))}
-              </Selector>
-            </li>
-          ))
+        {wounds.length > 0 ? (
+          wounds.map((descriptor, index) => {
+            const locator =
+              descriptor.locator.region === descriptor.locator.subregion
+                ? descriptor.locator.region
+                : `${descriptor.locator.region}, ${descriptor.locator.subregion}`;
+            return (
+              <li key={locator} className={styles.wound}>
+                <Text size="medium" color="white" variant="small-caps">
+                  {locator}
+                </Text>
+                <Selector
+                  id="type"
+                  data-label="Тип ранения"
+                  multiple
+                  size={3}
+                  value={descriptor.type}
+                  onChange={(event) => {
+                    const options = [...event.target.selectedOptions];
+                    const values = options.map((option) => option.value);
+
+                    const copy = [...wounds];
+                    copy[index] = { ...descriptor, type: values };
+
+                    onSelect(projection, copy);
+                  }}
+                >
+                  <Option value="wound">Рана</Option>
+                  <Option value="amputation">Ампутация</Option>
+                  <Option value="burn">Ожог</Option>
+                </Selector>
+                <Selector
+                  id="type"
+                  data-label="Препараты"
+                  multiple
+                  size={4}
+                  value={descriptor.medicines}
+                  onChange={(event) => {
+                    const options = [...event.target.selectedOptions];
+                    const values = options.map((option) => option.value);
+
+                    const copy = [...wounds];
+                    copy[index] = { ...descriptor, medicines: values };
+
+                    onSelect(projection, copy);
+                  }}
+                >
+                  <Option value="painkillers">Обезболивающее</Option>
+                  <Option value="antishock">Противошоковое</Option>
+                  <Option value="antifire">Противоожоговое</Option>
+                  <Option value="antiseptic">Антисептик</Option>
+                </Selector>
+                <Selector
+                  id="type"
+                  data-label="Оборудование"
+                  multiple
+                  size={5}
+                  value={descriptor.equipments}
+                  onChange={(event) => {
+                    const options = [...event.target.selectedOptions];
+                    const values = options.map((option) => option.value);
+
+                    const copy = [...wounds];
+                    copy[index] = { ...descriptor, equipments: values };
+
+                    onSelect(projection, copy);
+                  }}
+                >
+                  <Option value="tourniquet">Жгут</Option>
+                  <Option value="turnstile">Турникет</Option>
+                  <Option value="bandage">Бандаж</Option>
+                  <Option value="eyecup">Наглазник</Option>
+                  <Option value="catheter">Катетер</Option>
+                </Selector>
+              </li>
+            );
+          })
         ) : (
           <Text size="small" color="dark" variant="small-caps">
             Укажи расположение ранений на схеме чтобы указать их тип

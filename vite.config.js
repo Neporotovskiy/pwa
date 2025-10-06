@@ -19,6 +19,7 @@ export default defineConfig(() => {
         pages: resolve('./src/pages'),
         components: resolve('./src/components'),
         utilities: resolve('./src/utilities'),
+        types: resolve('./src/types'),
       },
     },
   };

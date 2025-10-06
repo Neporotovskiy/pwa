@@ -14,7 +14,8 @@
       "libraries/*": ["./src/libraries/*"],
       "pages/*": ["./src/pages/*"],
       "components/*": ["./src/components/*"],
-      "utilities/*": ["./src/utilities/*"]
+      "utilities/*": ["./src/utilities/*"],
+      "types/*": ["./src/types/*"]
     },
     "allowImportingTsExtensions": true
   },

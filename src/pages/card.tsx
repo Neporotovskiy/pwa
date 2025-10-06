@@ -1,4 +1,6 @@
-import type { FormEvent } from 'react';
+import { useState } from 'react';
+
+import type { Card as CardType } from 'types/card.ts';
 
 import { WoundLocator } from 'features/wound-locator';
 
@@ -8,51 +10,59 @@ import { Delimiter } from 'components/delimiter';
 import { Text } from 'components/text';
 import { Option, Selector } from 'components/selector';
 
-import { objectToString } from 'utilities/object-formatter.ts';
-
 import styles from './card.module.css';
 
 export const Card = () => {
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    const data = new FormData(event.target as HTMLFormElement);
-    const grouped: Record<string, Record<string, string> | string> = {};
+  const [card, setCard] = useState<CardType>({
+    triage: 'red',
+    scheme: {
+      projection: 'front',
+      wounds: [],
+    },
+    anthropometric: {
+      weight: '',
+      height: '',
+      sex: 1,
+    },
+    genetic: {
+      blood: 1,
+      factor: '+',
+    },
+    personal: {
+      callsign: '',
+    },
+  });
 
-    for (const [key, value] of data) {
-      const [group, field] = key.split('.');
-      if (!grouped[group]) grouped[group] = {};
-      if (field) {
-        // @ts-ignore
-        grouped[group][field] = value;
-      } else {
-        // @ts-ignore
-        grouped[group] = value;
-      }
-    }
-
-    navigator.clipboard
-      .writeText(objectToString(grouped))
-      .then(() => {
-        alert('Данные карточки скопированы в буфер обмена.');
-      })
-      .catch(() => {
-        alert('Бля, данные карточки проебались');
-      });
-  };
   return (
-    <Page as="form" onSubmit={submit} title="Создание ТМКР">
+    <Page title="Создание ТМКР">
       <Delimiter />
       <section className={styles.section}>
-        <Selector id="triage" name="Триаж" data-label="Триаж" defaultValue="Зеленая категория">
-          <Option value="Зеленая категория">Зеленая категория</Option>
-          <Option value="Оранжевая категория">Оранжевая категория</Option>
-          <Option value="Красная категория">Красная категория</Option>
-          <Option value="Черная категория">Черная категория</Option>
+        <Selector
+          id="triage"
+          data-label="Триаж"
+          value={card.triage}
+          onChange={(event) => {
+            setCard((other) => ({ ...other, triage: event.target.value }));
+          }}
+        >
+          <Option value="green">Зеленая категория</Option>
+          <Option value="yellow">Жёлтая категория</Option>
+          <Option value="red">Красная категория</Option>
+          <Option value="black">Черная категория</Option>
         </Selector>
       </section>
       <Delimiter />
       <section className={styles.section}>
-        <WoundLocator />
+        <WoundLocator
+          projection={card.scheme.projection}
+          wounds={card.scheme.wounds}
+          onSelect={(projection, wounds) => {
+            setCard((other) => ({
+              ...other,
+              scheme: { projection, wounds },
+            }));
+          }}
+        />
       </section>
       <Delimiter />
       <section className={styles.section}>
@@ -62,40 +72,71 @@ export const Card = () => {
         <div className={styles.row}>
           <Input
             id="height"
-            name="Антропометрические и генетические данные.Рост"
             data-label="Рост"
+            value={card.anthropometric.height}
+            onChange={(event) => {
+              setCard((other) => ({
+                ...other,
+                anthropometric: { ...other.anthropometric, height: event.target.value },
+              }));
+            }}
           />
-          <Input id="weight" name="Антропометрические и генетические данные.Вес" data-label="Вес" />
+          <Input
+            id="weight"
+            data-label="Вес"
+            value={card.anthropometric.weight}
+            onChange={(event) => {
+              setCard((other) => ({
+                ...other,
+                anthropometric: { ...other.anthropometric, weight: event.target.value },
+              }));
+            }}
+          />
         </div>
         <Selector
           id="sex"
-          name="Антропометрические и генетические данные.Пол"
           data-label="Пол"
-          defaultValue="Мужской"
+          value={card.anthropometric.sex}
+          onChange={(event) => {
+            setCard((other) => ({
+              ...other,
+              anthropometric: { ...other.anthropometric, sex: parseInt(event.target.value) },
+            }));
+          }}
         >
-          <Option value="Мужской">Мужской</Option>
-          <Option value="Женский">Женский</Option>
+          <Option value="1">Мужской</Option>
+          <Option value="0">Женский</Option>
         </Selector>
         <div className={styles.row}>
           <Selector
             id="blood-type"
-            name="Антропометрические и генетические данные.Группа крови"
             data-label="Группа крови"
-            defaultValue="Вторая"
+            value={card.genetic.blood}
+            onChange={(event) => {
+              setCard((other) => ({
+                ...other,
+                genetic: { ...other.genetic, blood: parseInt(event.target.value) },
+              }));
+            }}
           >
-            <Option value="Первая">Первая</Option>
-            <Option value="Вторая">Вторая</Option>
-            <Option value="Третья">Третья</Option>
-            <Option value="Четвертая">Четвертая</Option>
+            <Option value="0">Первая</Option>
+            <Option value="1">Вторая</Option>
+            <Option value="2">Третья</Option>
+            <Option value="3">Четвертая</Option>
           </Selector>
           <Selector
             id="rh"
-            name="Антропометрические и генетические данные.Резус-фактор"
             data-label="Резус-фактор"
-            defaultValue="Положительный"
+            value={card.genetic.factor}
+            onChange={(event) => {
+              setCard((other) => ({
+                ...other,
+                genetic: { ...other.genetic, factor: event.target.value },
+              }));
+            }}
           >
-            <Option value="Положительный">Положительный</Option>
-            <Option value="Отрицательный">Отрицательный</Option>
+            <Option value="+">Положительный</Option>
+            <Option value="-">Отрицательный</Option>
           </Selector>
         </div>
       </section>
@@ -104,10 +145,87 @@ export const Card = () => {
         <Text size="medium" color="white" variant="small-caps">
           Персональные данные
         </Text>
-        <Input id="callsign" name="Персональные данные.Позывной" data-label="Позывной" />
+        <Input
+          id="callsign"
+          data-label="Позывной"
+          value={card.personal.callsign}
+          onChange={(event) => {
+            setCard((other) => ({
+              ...other,
+              personal: { ...other.personal, callsign: event.target.value },
+            }));
+          }}
+        />
       </section>
-      <button type="submit" className={styles.button}>
-        Отправить ТМКР
+      <button
+        className={styles.button}
+        disabled={!window.isSecureContext}
+        onClick={() => {
+          const text = `
+-------------------
+Триаж
+-------------------
+${{ green: 'Зеленая категория', yellow: 'Жёлтая категория', red: 'Красная категория', black: 'Черная категория' }[card.triage]}
+
+-------------------
+Ранения (Проекция ${{ front: 'вентральная', right: 'сагиттальная прав.', back: 'дорсальная', left: 'сагиттальная лев.' }[card.scheme.projection]})
+-------------------
+${card.scheme.wounds
+  .map(({ locator: { region, subregion }, type, medicines, equipments }, index) => {
+    let result = `№${index + 1}`;
+    result += `\n Регион, подрегион: ${region === subregion ? region : `${region}, ${subregion}`}`;
+    result += `\n Типы ранения: ${type.map((key) => ({ wound: 'Рана', amputation: 'Ампутация', burn: 'Ожог' })[key]).join(', ')}`;
+    result += `\n Применённые препараты: ${medicines
+      .map(
+        (key) =>
+          ({
+            painkillers: 'Обезболивающее',
+            antishock: 'Противошоковое',
+            antifire: 'Противоожоговое',
+            antiseptic: 'Антисептик',
+          })[key],
+      )
+      .join(', ')}`;
+    result += `\n Применённое оборудование: ${equipments
+      .map(
+        (key) =>
+          ({
+            tourniquet: 'Жгут',
+            turnstile: 'Турникет',
+            bandage: 'Бандаж',
+            eyecup: 'Наглазник',
+            catheter: 'Катетер',
+          })[key],
+      )
+      .join(', ')}`;
+    return result;
+  })
+  .join('\n')}
+
+-------------------
+Антропометрические и генетические данные
+-------------------
+Рост: ${card.anthropometric.height}
+Вес: ${card.anthropometric.weight}
+Пол: ${['Женский', 'Мужской'][card.anthropometric.sex]}
+Группа крови: ${['O(I)', 'A(II)', 'B(III)', 'AB(IV)'][card.genetic.blood]}Rh${card.genetic.factor}
+
+-------------------
+Персональные данные
+-------------------
+Позывной: ${card.personal.callsign}
+          `;
+          navigator.clipboard
+            .writeText(text.trim())
+            .then(() => {
+              alert('Данные карточки скопированы в буфер обмена.');
+            })
+            .catch(() => {
+              alert('Бля, данные карточки проебались');
+            });
+        }}
+      >
+        ТМКР в буфер обмена
       </button>
     </Page>
   );
